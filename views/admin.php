@@ -5,9 +5,9 @@
  * This includes the header, options, and other information that should provide
  * The User Interface to the end user.
  *
- * @package   Pull_Automatically_Videos
+ * @package   Pull Automatically Videos
  * @author    Matias Esteban <estebanmatias92@gmail.com>
- * @license   GPL-2.0+
+ * @license   MIT License
  * @link      http://example.com
  * @copyright 2013 Matias Esteban
  */

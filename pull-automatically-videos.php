@@ -2,9 +2,9 @@
 /**
  * Pull Automatically Videos.
  *
- * @package   Pull_automatically_Videos
+ * @package   Pull Automatically Videos
  * @author    Matias Esteban <estebanmatias92@gmail.com>
- * @license   GPL-2.0+
+ * @license   MIT License
  * @link      http://example.com
  * @copyright 2013 Matias Esteban
  *
@@ -16,7 +16,7 @@
  * Author:      Matias Esteban
  * Author URI:  TODO
  * Text Domain: pull_automatically_videos-locale
- * License:     GPL-2.0+
+ * License:     MIT License
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Domain Path: /lang
  */

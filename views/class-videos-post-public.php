@@ -1,12 +1,13 @@
 <?php
 /**
- * Pull Automatically Videos.
+ * Class to the posts view.
  *
- * @package   Pull_Automatically_Videos
- * @author    Matias Esteban <estebanmatias92@gmail.com>
- * @license   GPL-2.0+
- * @link      http://example.com
- * @copyright 2013 Matias Esteban
+ * @package    Pull Automatically Videos
+ * @subpackage Pull_Automatically_Videos
+ * @author     Matias Esteban <estebanmatias92@gmail.com>
+ * @license    MIT License
+ * @link       http://example.com
+ * @copyright  2013 Matias Esteban
  */
 
 if ( ! class_exists( 'Videos_Post_Public' ) ) :
