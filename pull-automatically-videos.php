@@ -17,7 +17,7 @@
  * Author URI:  TODO
  * Text Domain: pull_automatically_videos-locale
  * License:     MIT License
- * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
+ * License URI: http://opensource.org/licenses/MIT
  * Domain Path: /lang
  */
 

@@ -10,7 +10,7 @@
  */
 
 // Includes
-require_once( 'includes/pav-helpers.php' );
+require_once( 'includes/helpers.php' );
 require_once( 'includes/class-videos-check-author.php' );
 require_once( 'includes/class-videos-posts-update.php' );
 require_once( 'includes/class-videos-posts-remove.php' );
@@ -18,6 +18,7 @@ require_once( 'includes/class-videos-post-add.php' );
 require_once( 'includes/class-videos-post.php' );
 require_once( 'includes/class-videos-fetch-youtube.php' );
 require_once( 'includes/class-videos-fetch-vimeo.php' );
+require_once( 'includes/class-videos-get-templates.php' );
 
 /**
  * Pull_Automatically_Videos.
@@ -149,6 +150,13 @@ class Pull_Automatically_Videos {
 	 */
 	protected static $post_status_select = 'publish';
 
+	/**
+	 * Name for the post type page and menu item.
+	 *
+	 * @var string
+	 */
+	protected static $page_name = '';
+
 
 	/**
 	 * Initialize the plugin by setting localization, filters, and administration functions.
@@ -157,8 +165,12 @@ class Pull_Automatically_Videos {
 	 */
 	protected function __construct() {
 
+		// Create post type and taxonomies
+		add_action( 'after_setup_theme', array( $this, 'create_post_type_and_tax' ) );
+
 		// Update values
-		add_action ( 'wp_loaded', array( $this, 'set_properties' ) );
+		self::$page_name = self::$default_type_name;
+		add_action( 'wp_loaded', array( $this, 'set_properties' ) );
 
 		// Load plugin text domain
 		add_action( 'init', array( $this, 'load_plugin_textdomain' ) );
@@ -177,9 +189,6 @@ class Pull_Automatically_Videos {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
-		// Create post type and taxonomies
-		add_action( 'after_setup_theme', array( $this, 'create_post_type_and_tax' ) );
-
 		// Set interval function
 		add_action( self::$plugin_slug .'_event', array( $this, 'interval_triggers' ) );
 
@@ -188,6 +197,9 @@ class Pull_Automatically_Videos {
 
 		// Set feed rss
 		add_filter( 'request', array( $this, 'feed_request' ) );
+
+		// Get the post type templates
+		add_filter( 'template_include', array( $this, 'template_chooser' ), 10, 2 );
 
 	}
 
@@ -224,25 +236,12 @@ class Pull_Automatically_Videos {
 		}*/
 
 	    // Start the cron
-	    if ( !wp_next_scheduled( self::$plugin_slug .'_event' ) ) {
+	    if ( ! wp_next_scheduled( self::$plugin_slug .'_event' ) ) {
 	        wp_schedule_event( time(), self::$fetch_intervals, self::$plugin_slug .'_event' );
 	    }
 
 	    // Insert the page (views)
-	    $page = get_page_by_title( self::$default_type_name );
-	    if ( ! $page ) {
-
-			$post_args['post_title']  = self::$default_type_name;
-			$post_args['post_type']   = 'page';
-			$post_args['post_status'] = 'publish';
-
-	        $post_id = wp_insert_post( $post_args );
-
-	        update_post_meta( $post_id, '_wp_page_template', 'archive-' . self::$default_post_type . '.php' );
-
-	    } else {
-	        update_post_meta( $page->ID, '_wp_page_template', 'archive-' . self::$default_post_type . '.php' );
-	    }
+	    add_page_and_menu( self::$page_name, PAV_PLUGIN_ROOT . 'views/templates/archive.php' );
 
 	}
 
@@ -258,20 +257,8 @@ class Pull_Automatically_Videos {
 	    // Unregister cron
 	    wp_clear_scheduled_hook( self::$plugin_slug .'_event' );
 
-	    // Delete archive page ( archive-[post-type] )
-		$post_type_obj = get_post_type_object( self::$post_type_select );
-		$page          = get_page_by_title( $post_type_obj->labels->name );
-
-	    if ( $page ) {
-	        wp_delete_post( $page->ID, true );
-	    }
-
-	    // Remove menu
-	    $post_types = get_post_types( array( '_builtin' => true ), 'names' );
-
-	    if ( post_type_exists( self::$post_type_select ) && ! in_array( self::$post_type_select, $post_types ) ) {
-	        remove_menu_page( self::$post_type_select );
-	    }
+	    // Delete archive page
+	    remove_page_and_menu( self::$page_name, true );
 
 	}
 
@@ -282,43 +269,17 @@ class Pull_Automatically_Videos {
 	 */
 	public static function uninstall() {
 
-		global $wp_post_types, $wp_taxonomies;
+		// Delete archive page and menu
+	    remove_page_and_menu( self::$page_name, true );
 
-		// Delete all terms attached to the taxonomies attached to the post type and unregister these
-		/*
-		$taxonomies_object = get_object_taxonomies( self::$post_type_select, 'object' );
-		foreach ( $taxonomies_object as $tax_object ) {
-			self::$taxonomy_select = $tax_object->rewrite['slug'];
+		// Delete all post-type terms, and taxonomies
+		add_action( 'unregister_post_type', 'delete_post_type_taxonomies', 10 );
 
-			if ( !in_array( self::$taxonomy_select, get_taxonomies( '','names' ) ) ) {
-				# code...
-			}
-			if ( taxonomy_exists( self::$taxonomy_select ) && !in_array(self::$taxonomy_select, get_taxonomies( array( '_builtin' => true ), 'names' ) ) ) {
-				if ( get_terms( self::$taxonomy_select ) ) {
-					foreach ( get_terms( self::$taxonomy_select ) as $term_object ) {
-						wp_delete_term( $term_object->term_id, self::$taxonomy_select );
-					}
-				}
+		// Delete all related posts and his attachments
+		delete_post_type_posts( self::$post_type, true, true );
 
-				unset( $wp_taxonomies[self::$taxonomy_select] );
-			}
-		}*/
-
-		// Delete archive page (archive-[post-type])
-		$post_type_name = get_post_type_object( self::$post_type_select )->labels->name;
-		$page           = get_page_by_title( $post_type_name );
-		if ( $page ) {
-			wp_delete_post( $page->ID, true );
-		}
-
-		// Remove all videos
-		$delete = new Videos_Posts_Remove();
-		$delete->remove_all();
-
-		// Finally, delete the post type
-		if ( post_type_exists( self::$post_type_select ) && ! in_array( self::$post_type_select, get_post_types( array( '_builtin' => true ), 'names' ) ) ) {
-			unset( $wp_post_types[self::$post_type_select] );
-		}
+		// Remove post-type from Wordpress
+		unregister_post_type( self::$post_type );
 
 		// Delete plugin option
 		delete_option( self::$plugin_slug . '_option' );
@@ -444,9 +405,8 @@ class Pull_Automatically_Videos {
 	 */
 	public function create_post_type_and_tax() {
 
-		if ( ! class_exists( 'Super_Custom_Post_Type' ) ) {
+		if ( ! class_exists( 'Super_Custom_Post_Type' ) )
 			return;
-		}
 
 		// Add post type
 		$post_type_labels =  array(
@@ -625,6 +585,23 @@ class Pull_Automatically_Videos {
 	    }
 
 	    return $query_var;
+
+	}
+
+	/**
+	 * Get the custom post-type templates.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string    $template Default wordpress hierarchy template to use.
+	 *
+	 * @return string    The current template file that will be use.
+	 */
+	public function template_chooser( $template ) {
+
+		$file = new Videos_Get_Templates();
+
+		return $file->get_template( $template );
 
 	}
 

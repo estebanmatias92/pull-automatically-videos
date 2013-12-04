@@ -1,10 +1,12 @@
-=== Pull Automatically Videos ===
+Pull Automatically Videos
+=========================
+
 Contributors: (this should be a list of wordpress.org userid's)
 Donate link: TODO
-Tags: wordpress, plugin
-Requires at least: 3.5.1
-Tested up to: 3.6
-Stable tag: 0.1.0
+Tags: post-type, videos, gallery
+Requires at least: 3.7.1
+Tested up to: 3.7
+Stable tag: -
 License: MIT License
 License URI: http://opensource.org/licenses/MIT
 
